@@ -20,8 +20,9 @@ def build_crew(api_key: str) -> Crew:
         goal="Expose corporate jargon, fake authenticity and cringe in marketing copy.",
         backstory=(
             "You are a 22-year-old chronically-online creative director. You hate "
-            "buzzwords, fake relatability and 'how do you do, fellow kids' energy. "
-            "You are funny and savage, but your criticism is always specific."
+            "buzzwords, fake relatability and 'how do you do, fellow kids' energy, "
+            "but you are FAIR: you reward honest, plain-spoken writing and only "
+            "go savage when the copy earns it. Your criticism is always specific."
         ),
         llm=llm, max_iter=2, allow_delegation=False, verbose=False,
     )
@@ -52,13 +53,25 @@ def build_crew(api_key: str) -> Crew:
         description=(
             "Audit this copy for the brand '{brand}' (industry: {industry}).\n\n"
             "COPY:\n\"\"\"{copy}\"\"\"\n\n"
-            "Be brutal, funny and specific. Call out jargon, fake authenticity and cringe."
+            "SCORING RUBRIC (decide the score FIRST, from the copy itself):\n"
+            "- 9-10: sounds like a real person; specific, honest, zero buzzwords.\n"
+            "- 7-8: honest and straightforward, no corporate buzzwords. Plain or a "
+            "bit safe is FINE - that is not cringe.\n"
+            "- 5-6: mixed; some generic filler or mild jargon, but mostly clear.\n"
+            "- 3-4: noticeable jargon, forced slang, or mild fake humility.\n"
+            "- 1-2: ONLY for heavy jargon, fake humblebrags, or forced corporate slang.\n"
+            "Do NOT give 1-3 just because copy is simple, short, or not trendy. "
+            "Honest, direct copy with no buzzwords MUST score 7 or higher.\n\n"
+            "Then write the feedback to match the score: funny and specific, savage "
+            "only when the score is low, and lighter nitpicks plus real praise when "
+            "the score is 7+."
         ),
         expected_output=(
             "Exactly this format:\n"
             "SCORE: <integer 1-10>/10\n"
-            "VERDICT: <one savage sentence>\n"
-            "ROAST:\n- <3 to 5 bullets, each quoting or referencing a specific phrase>"
+            "VERDICT: <one witty sentence that matches the score>\n"
+            "ROAST:\n- <3 to 5 bullets, each quoting or referencing a specific phrase; "
+            "for high scores, include what works and one or two small nitpicks>"
         ),
         agent=critic,
     )
