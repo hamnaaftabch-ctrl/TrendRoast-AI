@@ -1,26 +1,50 @@
-"""llm_utils.py - Groq LLM wrapper that fixes the 'cache_breakpoint' 400 error.
+"""llm_utils.py - CrewAI LLM backed directly by the official Groq SDK.
 
-CrewAI 1.15+ tags system messages with a `cache_breakpoint` flag (for prompt
-caching). Its native providers strip it, but the LiteLLM route used for Groq
-does not, so Groq rejects the request. We strip it before sending.
+Uses ONLY the model `openai/gpt-oss-120b`. No LiteLLM involved, which avoids
+LiteLLM import problems and the `cache_breakpoint` field Groq rejects.
 """
-from crewai import LLM
+from typing import Any
 
-DEFAULT_MODEL = "groq/openai/gpt-oss-120b"
-_UNSUPPORTED_KEYS = ("cache_breakpoint",)
+from crewai import BaseLLM
+from groq import Groq
 
-
-class GroqLLM(LLM):
-    def _format_messages_for_provider(self, messages):
-        formatted = super()._format_messages_for_provider(messages)
-        cleaned = []
-        for m in formatted:
-            m = dict(m)
-            for key in _UNSUPPORTED_KEYS:
-                m.pop(key, None)
-            cleaned.append(m)
-        return cleaned
+MODEL = "openai/gpt-oss-120b"       # the only model this app uses
+REASONING_EFFORT = "medium"          # "low" = faster, "high" = deeper
 
 
-def build_llm(api_key: str, model: str = DEFAULT_MODEL, max_tokens: int = 1500) -> LLM:
-    return GroqLLM(model=model, api_key=api_key, temperature=0.7, max_tokens=max_tokens)
+class GroqSDKLLM(BaseLLM):
+    llm_type: str = "groq-sdk"
+
+    def call(self, messages, tools=None, callbacks=None, available_functions=None,
+             from_task=None, from_agent=None, response_model=None) -> str:
+        if isinstance(messages, str):
+            messages = [{"role": "user", "content": messages}]
+
+        # Keep only what Groq accepts (drops CrewAI-internal fields).
+        clean = [{"role": m["role"], "content": m.get("content") or ""} for m in messages]
+
+        kwargs: dict[str, Any] = dict(
+            model=MODEL,
+            messages=clean,
+            temperature=self.temperature if self.temperature is not None else 1,
+            max_completion_tokens=int(self.max_tokens or 2048),
+            top_p=1,
+            reasoning_effort=REASONING_EFFORT,
+            stream=False,
+        )
+        if self.stop:
+            kwargs["stop"] = self.stop[:4]
+
+        client = Groq(api_key=self.api_key)
+        completion = client.chat.completions.create(**kwargs)
+        return completion.choices[0].message.content or ""
+
+    def supports_function_calling(self) -> bool:
+        return False  # our agents use plain text; no tool-call JSON to get wrong
+
+    def get_context_window_size(self) -> int:
+        return 131072
+
+
+def build_llm(api_key: str, max_tokens: int = 2048) -> GroqSDKLLM:
+    return GroqSDKLLM(model=MODEL, api_key=api_key, temperature=0.8, max_tokens=max_tokens)
