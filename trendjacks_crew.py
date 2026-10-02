@@ -8,7 +8,7 @@ os.environ.setdefault("OTEL_SDK_DISABLED", "true")
 from crewai import Agent, Crew, Process, Task  # noqa: E402
 
 from llm_utils import DEFAULT_MODEL, build_llm  # noqa: E402
-from tools import web_search  # noqa: E402
+from tools import gather_trend_data  # noqa: E402
 
 
 def build_crew(api_key: str, model: str = DEFAULT_MODEL) -> Crew:
@@ -34,8 +34,7 @@ def build_crew(api_key: str, model: str = DEFAULT_MODEL) -> Crew:
             "You live on the For You Page. You track viral formats, sounds, memes "
             "and slang, and only report trends backed by what you find on the web."
         ),
-        tools=[web_search], llm=llm, max_iter=4, max_rpm=20,
-        allow_delegation=False, verbose=False,
+        llm=llm, max_iter=2, allow_delegation=False, verbose=False,
     )
 
     # ---------- Agent 3: Viral Copywriter & Director ----------
@@ -66,10 +65,12 @@ def build_crew(api_key: str, model: str = DEFAULT_MODEL) -> Crew:
 
     trend_task = Task(
         description=(
-            "Find 3-4 CURRENT viral trends, formats, sounds or slang on TikTok and "
-            "Instagram Reels relevant to the '{industry}' niche. Run 2-3 searches "
-            "(e.g. 'viral TikTok trends {industry} this week'). Use ONLY what the "
-            "search results support. If searches fail, say so honestly."
+            "Identify 3-4 CURRENT viral trends, formats, sounds or slang on TikTok and "
+            "Instagram Reels relevant to the '{industry}' niche, using ONLY the live "
+            "DuckDuckGo results below. Cite the source URL for each. If the data says "
+            "NO_LIVE_DATA, state that clearly, then give 3 well-known evergreen formats "
+            "labelled '(evergreen, not live)'.\n\n"
+            "LIVE SEARCH RESULTS:\n{search_results}"
         ),
         expected_output=(
             "3-4 bullets in the format:\n"
@@ -111,7 +112,9 @@ def run_trendjacks(brand: str, industry: str, copy: str, api_key: str,
                    model: str = DEFAULT_MODEL) -> dict:
     """Run the crew and return the three raw section outputs."""
     crew = build_crew(api_key, model)
-    result = crew.kickoff(inputs={"brand": brand, "industry": industry, "copy": copy})
+    search_results = gather_trend_data(industry)  # live web data, fetched in Python
+    result = crew.kickoff(inputs={"brand": brand, "industry": industry,
+                                  "copy": copy, "search_results": search_results})
     outs = [(t.raw or "").strip() for t in result.tasks_output]
     if len(outs) < 3 or not outs[2]:
         raise RuntimeError("The agents returned incomplete results. Please try again.")
