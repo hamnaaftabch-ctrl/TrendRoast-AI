@@ -5,18 +5,10 @@ import streamlit as st
 
 st.set_page_config(page_title="TrendJacks AI", page_icon="🔥", layout="wide")
 
-st.markdown(
-    """
-    <style>
-    div.stButton > button[kind="primary"] {
-        font-size: 1.2rem; font-weight: 800; padding: 0.8rem 1rem;
-        background: linear-gradient(90deg, #ff2d75, #ff7a18); border: none; color: white;
-    }
-    div.stButton > button[kind="primary"]:hover { filter: brightness(1.1); }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+from pathlib import Path  # noqa: E402
+
+st.markdown(f"<style>{(Path(__file__).parent / 'style.css').read_text()}</style>",
+            unsafe_allow_html=True)
 
 
 def get_secret(name: str, default: str = "") -> str:
@@ -30,8 +22,17 @@ API_KEY = get_secret("GROQ_API_KEY")
 INDUSTRIES = ["Fashion", "Tech", "Food & Beverage", "Fitness", "Beauty", "Gaming",
               "Travel", "Education", "Finance", "Other"]
 
-st.title("🔥 TrendJacks AI")
-st.caption("Get roasted by a Gen Z critic, then hijack what's trending right now.")
+st.markdown(
+    """
+    <div class="tj-hero">
+      <h1>🔥 TrendJacks AI</h1>
+      <p>Get roasted by a Gen Z critic, then hijack what's trending right now.</p>
+      <div class="tj-pills"><span class="tj-pill">01 · ROAST</span>
+      <span class="tj-pill">02 · LIVE TRENDS</span><span class="tj-pill">03 · REEL BLUEPRINT</span></div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 if not API_KEY:
     st.error("**GROQ_API_KEY is missing.** Add it under Streamlit Cloud → Settings → Secrets, "
@@ -80,8 +81,16 @@ if res:
         st.subheader("🔪 The Roast")
         score = parse_score(res["roast"])
         if score is not None:
-            st.metric("Gen Z Authenticity Score", f"{score}/10")
-            st.progress(score / 10)
+            tone, tag = (("tj-high", "AUTHENTIC ✅") if score >= 7
+                         else ("tj-low", "CRINGE ALERT 🚨") if score <= 4 else ("tj-mid", "MID — NEEDS WORK"))
+            st.markdown(
+                f'<div class="tj-score {tone}" style="--tj-pct:{score * 10}%">'
+                f'<div class="label">Gen Z Authenticity Score</div>'
+                f'<div class="num">{score}<span>/10</span></div>'
+                f'<div class="tag">{tag}</div>'
+                f'<div class="tj-bar"><div></div></div></div>',
+                unsafe_allow_html=True,
+            )
         st.markdown(res["roast"])
 
     with right:
