@@ -1,6 +1,6 @@
-# Verified resolvable together on Python 3.12 (Oct 2026).
-# crewai[litellm] is REQUIRED: Groq is routed through LiteLLM in CrewAI 1.x.
-crewai[litellm]==1.15.23
+# Verified together on Python 3.12. On Streamlit Cloud choose Python 3.12 when creating the app.
+# No LiteLLM needed: the LLM calls go through the official Groq SDK.
+crewai==1.15.23
+groq==1.7.0
 streamlit==1.64.0
-# `duckduckgo-search` was renamed to `ddgs` (old package is frozen at 8.1.1)
 ddgs==9.16.0
