@@ -7,12 +7,12 @@ os.environ.setdefault("OTEL_SDK_DISABLED", "true")
 
 from crewai import Agent, Crew, Process, Task  # noqa: E402
 
-from llm_utils import DEFAULT_MODEL, build_llm  # noqa: E402
+from llm_utils import build_llm  # noqa: E402
 from tools import gather_trend_data  # noqa: E402
 
 
-def build_crew(api_key: str, model: str = DEFAULT_MODEL) -> Crew:
-    llm = build_llm(api_key, model)
+def build_crew(api_key: str) -> Crew:
+    llm = build_llm(api_key)
 
     # ---------- Agent 1: Brutal Critic ----------
     critic = Agent(
@@ -108,10 +108,9 @@ def build_crew(api_key: str, model: str = DEFAULT_MODEL) -> Crew:
     )
 
 
-def run_trendjacks(brand: str, industry: str, copy: str, api_key: str,
-                   model: str = DEFAULT_MODEL) -> dict:
+def run_trendjacks(brand: str, industry: str, copy: str, api_key: str) -> dict:
     """Run the crew and return the three raw section outputs."""
-    crew = build_crew(api_key, model)
+    crew = build_crew(api_key)
     search_results = gather_trend_data(industry)  # live web data, fetched in Python
     result = crew.kickoff(inputs={"brand": brand, "industry": industry,
                                   "copy": copy, "search_results": search_results})
