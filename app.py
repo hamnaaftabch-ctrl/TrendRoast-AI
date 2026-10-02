@@ -27,7 +27,6 @@ def get_secret(name: str, default: str = "") -> str:
 
 
 API_KEY = get_secret("GROQ_API_KEY")
-MODEL = get_secret("GROQ_MODEL", "groq/openai/gpt-oss-120b")
 INDUSTRIES = ["Fashion", "Tech", "Food & Beverage", "Fitness", "Beauty", "Gaming",
               "Travel", "Education", "Finance", "Other"]
 
@@ -61,7 +60,7 @@ if go:
         try:
             with st.spinner("Critic is sharpening claws → Scout is scanning the web → Director is cooking..."):
                 st.session_state["result"] = run_trendjacks(
-                    brand.strip(), industry, copy.strip(), API_KEY, MODEL)
+                    brand.strip(), industry, copy.strip(), API_KEY)
         except Exception as exc:
             msg = str(exc)
             if "429" in msg or "rate" in msg.lower():
