@@ -1,0 +1,86 @@
+/* TrendJacks AI - Cyberpunk Neon theme
+   bg #0B0E14 | cards #161B22 | gradient #7C3AED -> #06B6D4 | lime #10B981 | coral #F43F5E */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap');
+
+:root {
+  --bg: #0B0E14; --card: #161B22; --border: #2A3140; --text: #E6EDF3; --muted: #8B949E;
+  --violet: #7C3AED; --cyan: #06B6D4; --lime: #10B981; --coral: #F43F5E;
+  --grad: linear-gradient(135deg, #7C3AED, #06B6D4);
+}
+
+html, body, [class*="css"], .stApp { font-family: 'Space Grotesk', system-ui, sans-serif; }
+.stApp { background: radial-gradient(1200px 500px at 85% -10%, rgba(124,58,237,.18), transparent 60%),
+                    radial-gradient(900px 400px at -10% 10%, rgba(6,182,212,.12), transparent 60%), var(--bg); color: var(--text); }
+header[data-testid="stHeader"] { background: transparent; }
+.block-container { max-width: 1100px; padding-top: 2rem; }
+hr { border-color: var(--border) !important; }
+
+/* ---------- Hero ---------- */
+.tj-hero { text-align: center; padding: 1.2rem 0 1.6rem; }
+.tj-hero h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); font-weight: 700; margin: 0; letter-spacing: -1px;
+  background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 18px rgba(124,58,237,.45)); }
+.tj-hero p { color: var(--muted); font-size: 1.1rem; margin: .5rem 0 0; }
+.tj-pills { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+.tj-pill { font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: var(--cyan);
+  border: 1px solid rgba(6,182,212,.4); border-radius: 999px; padding: .2rem .7rem; background: rgba(6,182,212,.07); }
+
+/* ---------- Cards / containers ---------- */
+[data-testid="stVerticalBlockBorderWrapper"] {
+  background: var(--card); border: 1px solid var(--border) !important; border-radius: 16px;
+  box-shadow: 0 0 0 1px rgba(124,58,237,.05), 0 10px 30px rgba(0,0,0,.35); }
+
+/* ---------- Inputs ---------- */
+label, [data-testid="stWidgetLabel"] p { color: var(--text) !important; font-weight: 500; }
+.stTextInput input, .stTextArea textarea, [data-baseweb="select"] > div {
+  background: #0F131A !important; color: var(--text) !important;
+  border: 1px solid var(--border) !important; border-radius: 10px !important; }
+.stTextInput input:focus, .stTextArea textarea:focus, [data-baseweb="select"] > div:focus-within {
+  border-color: var(--cyan) !important; box-shadow: 0 0 0 2px rgba(6,182,212,.25) !important; }
+::placeholder { color: #566074 !important; }
+
+/* ---------- Primary button ---------- */
+.stButton > button[kind="primary"], button[data-testid="stBaseButton-primary"] {
+  background: var(--grad) !important; color: #fff !important; border: none !important;
+  font-size: 1.2rem; font-weight: 700; letter-spacing: .5px; padding: .85rem 1rem; border-radius: 12px;
+  box-shadow: 0 0 22px rgba(124,58,237,.45); transition: transform .15s ease, box-shadow .15s ease; }
+.stButton > button[kind="primary"]:hover, button[data-testid="stBaseButton-primary"]:hover {
+  transform: translateY(-2px) scale(1.01); box-shadow: 0 0 34px rgba(6,182,212,.6); }
+.stButton > button[kind="primary"]:active { transform: scale(.99); }
+[data-testid="stDownloadButton"] button { background: transparent; color: var(--cyan);
+  border: 1px solid var(--cyan); border-radius: 10px; }
+[data-testid="stDownloadButton"] button:hover { background: rgba(6,182,212,.12); color: #fff; }
+
+/* ---------- Section titles ---------- */
+h2, h3, h4 { color: var(--text); font-weight: 700; }
+[data-testid="stHeadingWithActionElements"] h3 { border-left: 4px solid var(--violet); padding-left: .6rem; }
+
+/* ---------- Score card ---------- */
+.tj-score { border-radius: 16px; padding: 1.1rem 1.3rem; margin-bottom: 1rem; background: var(--card);
+  border: 1px solid var(--tj-color); box-shadow: 0 0 24px var(--tj-glow); }
+.tj-score .label { color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: 1.5px; }
+.tj-score .num { font-family: 'JetBrains Mono', monospace; font-size: 3rem; font-weight: 500; color: var(--tj-color);
+  line-height: 1.1; text-shadow: 0 0 18px var(--tj-glow); }
+.tj-score .num span { font-size: 1.3rem; color: var(--muted); }
+.tj-score .tag { display: inline-block; margin-top: .3rem; font-size: .8rem; font-weight: 700; color: var(--tj-color);
+  border: 1px solid var(--tj-color); border-radius: 999px; padding: .1rem .6rem; }
+.tj-bar { height: 8px; background: #0F131A; border-radius: 999px; margin-top: .8rem; overflow: hidden; }
+.tj-bar > div { height: 100%; width: var(--tj-pct); background: var(--tj-color); border-radius: 999px;
+  box-shadow: 0 0 12px var(--tj-glow); }
+.tj-high { --tj-color: #10B981; --tj-glow: rgba(16,185,129,.35); }
+.tj-mid  { --tj-color: #06B6D4; --tj-glow: rgba(6,182,212,.35); }
+.tj-low  { --tj-color: #F43F5E; --tj-glow: rgba(244,63,94,.40); }
+
+/* ---------- Hook / caption alerts ---------- */
+[data-testid="stAlert"] { border-radius: 14px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+[data-testid="stAlert"]:has([data-testid="stAlertContentSuccess"]) { border-color: var(--lime); box-shadow: 0 0 18px rgba(16,185,129,.25); font-size: 1.25rem; font-weight: 700; }
+[data-testid="stAlert"]:has([data-testid="stAlertContentInfo"]) { border-color: var(--cyan); box-shadow: 0 0 18px rgba(6,182,212,.22); }
+[data-testid="stAlert"]:has([data-testid="stAlertContentWarning"]) { border-color: var(--coral); }
+[data-testid="stAlert"]:has([data-testid="stAlertContentError"]) { border-color: var(--coral); box-shadow: 0 0 18px rgba(244,63,94,.25); }
+
+/* ---------- Misc ---------- */
+[data-testid="stCaptionContainer"] { color: var(--muted); }
+a { color: var(--cyan) !important; }
+code { color: var(--cyan); background: #0F131A; }
+[data-testid="stSpinner"] p { color: var(--cyan); font-family: 'JetBrains Mono', monospace; }
+::selection { background: var(--violet); color: #fff; }
