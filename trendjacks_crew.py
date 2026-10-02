@@ -1,0 +1,134 @@
+"""trendjacks_crew.py - the 3-agent TrendJacks crew (Critic -> Scout -> Copywriter)."""
+import os
+import re
+
+os.environ.setdefault("CREWAI_DISABLE_TELEMETRY", "true")
+os.environ.setdefault("OTEL_SDK_DISABLED", "true")
+
+from crewai import Agent, Crew, Process, Task  # noqa: E402
+
+from llm_utils import DEFAULT_MODEL, build_llm  # noqa: E402
+from tools import web_search  # noqa: E402
+
+
+def build_crew(api_key: str, model: str = DEFAULT_MODEL) -> Crew:
+    llm = build_llm(api_key, model)
+
+    # ---------- Agent 1: Brutal Critic ----------
+    critic = Agent(
+        role="Brutal Gen Z Brand Auditor",
+        goal="Expose corporate jargon, fake authenticity and cringe in marketing copy.",
+        backstory=(
+            "You are a 22-year-old chronically-online creative director. You hate "
+            "buzzwords, fake relatability and 'how do you do, fellow kids' energy. "
+            "You are funny and savage, but your criticism is always specific."
+        ),
+        llm=llm, max_iter=2, allow_delegation=False, verbose=False,
+    )
+
+    # ---------- Agent 2: Trend Scout ----------
+    scout = Agent(
+        role="Trend Scout (Live Radar)",
+        goal="Find what is trending RIGHT NOW on TikTok/Instagram Reels in a given niche.",
+        backstory=(
+            "You live on the For You Page. You track viral formats, sounds, memes "
+            "and slang, and only report trends backed by what you find on the web."
+        ),
+        tools=[web_search], llm=llm, max_iter=4, max_rpm=20,
+        allow_delegation=False, verbose=False,
+    )
+
+    # ---------- Agent 3: Viral Copywriter & Director ----------
+    director = Agent(
+        role="Viral Copywriter & Reel Director",
+        goal="Turn a roast and live trends into a ready-to-shoot short-form video package.",
+        backstory=(
+            "You have written dozens of 1M+ view Reels. You write hooks that stop "
+            "thumbs in 2 seconds and captions that sound like a real human, not a brand."
+        ),
+        llm=llm, max_iter=2, allow_delegation=False, verbose=False,
+    )
+
+    roast_task = Task(
+        description=(
+            "Audit this copy for the brand '{brand}' (industry: {industry}).\n\n"
+            "COPY:\n\"\"\"{copy}\"\"\"\n\n"
+            "Be brutal, funny and specific. Call out jargon, fake authenticity and cringe."
+        ),
+        expected_output=(
+            "Exactly this format:\n"
+            "SCORE: <integer 1-10>/10\n"
+            "VERDICT: <one savage sentence>\n"
+            "ROAST:\n- <3 to 5 bullets, each quoting or referencing a specific phrase>"
+        ),
+        agent=critic,
+    )
+
+    trend_task = Task(
+        description=(
+            "Find 3-4 CURRENT viral trends, formats, sounds or slang on TikTok and "
+            "Instagram Reels relevant to the '{industry}' niche. Run 2-3 searches "
+            "(e.g. 'viral TikTok trends {industry} this week'). Use ONLY what the "
+            "search results support. If searches fail, say so honestly."
+        ),
+        expected_output=(
+            "3-4 bullets in the format:\n"
+            "- **<Trend name>**: <what it is and how it works, 1-2 sentences> "
+            "(Source: <url>)"
+        ),
+        agent=scout,
+    )
+
+    blueprint_task = Task(
+        description=(
+            "Brand: {brand} | Industry: {industry}\n"
+            "Using the critic's roast and the scout's trends (in context), write ONE "
+            "Reel/TikTok package that fixes the cringe and hijacks the best-fitting "
+            "trend. Keep it authentic, a bit unhinged, and true to the brand's product."
+        ),
+        expected_output=(
+            "Exactly this format, nothing else:\n"
+            "TREND USED: <trend name>\n"
+            "HOOK: <thumb-stopping first line, max 12 words>\n"
+            "CAPTION: <authentic, unhinged caption with 2-3 hashtags>\n"
+            "SCENE 1 (0-3s): <visual + on-screen text>\n"
+            "SCENE 2 (3-10s): <visual + action>\n"
+            "SCENE 3 (10-15s): <payoff + call to action>"
+        ),
+        agent=director,
+        context=[roast_task, trend_task],
+    )
+
+    return Crew(
+        agents=[critic, scout, director],
+        tasks=[roast_task, trend_task, blueprint_task],
+        process=Process.sequential,
+        verbose=False,
+    )
+
+
+def run_trendjacks(brand: str, industry: str, copy: str, api_key: str,
+                   model: str = DEFAULT_MODEL) -> dict:
+    """Run the crew and return the three raw section outputs."""
+    crew = build_crew(api_key, model)
+    result = crew.kickoff(inputs={"brand": brand, "industry": industry, "copy": copy})
+    outs = [(t.raw or "").strip() for t in result.tasks_output]
+    if len(outs) < 3 or not outs[2]:
+        raise RuntimeError("The agents returned incomplete results. Please try again.")
+    return {"roast": outs[0], "trends": outs[1], "blueprint": outs[2]}
+
+
+# ---------- Output parsing helpers (used by the UI) ----------
+def parse_score(roast: str):
+    m = re.search(r"SCORE:\s*(\d{1,2})\s*/\s*10", roast, re.I)
+    return max(0, min(10, int(m.group(1)))) if m else None
+
+
+def parse_blueprint(text: str) -> dict:
+    keys = ["TREND USED", "HOOK", "CAPTION", "SCENE 1", "SCENE 2", "SCENE 3"]
+    out = {}
+    for k in keys:
+        m = re.search(rf"{k}[^:\n]*:\s*(.+?)(?=\n[A-Z][A-Z ]+(?:\d)?[^:\n]*:|\Z)", text, re.S)
+        if m:
+            out[k] = m.group(1).strip()
+    return out
